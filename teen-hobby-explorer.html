@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Previous head and style sections remain the same -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hobby Explorer</title>
+    <style>
+        /* Previous styles remain the same */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        #quiz-container, #hobby-list {
+            display: block;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .hobby-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .hobby-card {
+            background-color: #f1f5f9;
+            border-radius: 6px;
+            padding: 15px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-align: center;
+        }
+        .hobby-card:hover {
+            transform: scale(1.05);
+            background-color: #e2e8f0;
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+        .close-btn {
+            float: right;
+            cursor: pointer;
+            font-size: 24px;
+        }
+        .get-started-btn {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .quiz-question {
+            margin-bottom: 20px;
+        }
+        .quiz-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .quiz-option {
+            background-color: #f1f5f9;
+            padding: 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .quiz-option:hover {
+            background-color: #e2e8f0;
+        }
+        .quiz-option.selected {
+            background-color: #3498db;
+            color: white;
+        }
+        .navigation-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        .navigation-btn:hover {
+            background-color: #2980b9;
+        }
+        #show-all-hobbies {
+            display: none;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <h1>Teen Hobby Explorer</h1>
+            
+            <div id="quiz-container">
+                <h2>Find Your Perfect Hobby!</h2>
+                <div id="quiz-questions"></div>
+                <div id="quiz-navigation" style="text-align: center;">
+                    <button id="prev-btn" class="navigation-btn" style="display: none;">Previous</button>
+                    <button id="next-btn" class="navigation-btn">Next</button>
+                </div>
+            </div>
+
+            <div id="hobby-list" class="hobby-grid" style="display: none;"></div>
+            <button id="show-all-hobbies" class="navigation-btn">View All Hobbies</button>
+        </div>
+    </div>
+
+    <script>
+    // Define the quizQuestions array first
+    const quizQuestions = [
+        {
+            question: "What type of activities do you enjoy most?",
+            options: [
+                { text: "Creative Activities", categories: ["Creative"] },
+                { text: "Technical Challenges", categories: ["Tech"] },
+                { text: "Physical Activities", categories: ["Sports", "Nature"] },
+                { text: "Learning New Skills", categories: ["Music", "Culinary"] }
+            ]
+        },
+        {
+            question: "How much time can you dedicate weekly?",
+            options: [
+                { text: "Less than 2 hours", weightReduction: 0.5 },
+                { text: "2-5 hours", weightReduction: 0.8 },
+                { text: "More than 5 hours", weightReduction: 1 }
+            ]
+        },
+        {
+            question: "What's your budget for getting started?",
+            options: [
+                { text: "Free or Very Low Cost", costSensitive: true },
+                { text: "Some Investment OK", costSensitive: false },
+                { text: "Ready to Invest Significantly", costSensitive: false }
+            ]
+        }
+    ];
+
+    // Define the hobbies array
+    const hobbies = [
+        {
+            id: 1,
+            name: "Photography",
+            category: "Creative",
+            description: "Capture the world through a lens and express your unique perspective.",
+            tips: [
+                "Start with your smartphone camera",
+                "Learn basic composition techniques",
+                "Follow photography accounts on social media"
+            ],
+            getStartedLink: "https://www.skillshare.com/browse/photography"
+        },
+        {
+            id: 2,
+            name: "Coding",
+            category: "Tech",
+            description: "Learn to create websites, apps, and digital projects.",
+            tips: [
+                "Begin with free online tutorials",
+                "Try platforms like Codecademy",
+                "Join online coding communities"
+            ],
+            getStartedLink: "https://www.codecademy.com/learn"
+        },
+        {
+            id: 3,
+            name: "Drawing",
+            category: "Creative",
+            description: "Express yourself through art and develop your creative skills.",
+            tips: [
+                "Start with basic sketching materials",
+                "Watch YouTube art tutorials",
+                "Practice drawing regularly"
+            ],
+            getStartedLink: "https://www.udemy.com/topic/drawing/"
+        },
+        {
+            id: 4,
+            name: "Guitar",
+            category: "Music",
+            description: "Learn to play music and express yourself through sound.",
+            tips: [
+                "Get a beginner acoustic guitar",
+                "Use free online lesson resources",
+                "Practice consistently"
+            ],
+            getStartedLink: "https://www.justinguitar.com/"
+        },
+        {
+            id: 5,
+            name: "Cooking",
+            category: "Culinary",
+            description: "Learn to create delicious meals and explore culinary creativity.",
+            tips: [
+                "Start with simple recipes",
+                "Watch cooking YouTube channels",
+                "Experiment with different cuisines"
+            ],
+            getStartedLink: "https://www.allrecipes.com/recipes/22892/everyday-cooking/cooking-basics/"
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let userResponses = [];
+
+    // Initialize the quiz
+    window.addEventListener('DOMContentLoaded', () => {
+        renderCurrentQuestion();
+        setupEventListeners();
+    });
+
+    function renderCurrentQuestion() {
+        const currentQuestion = quizQuestions[currentQuestionIndex];
+        const questionsContainer = document.getElementById('quiz-questions');
+        
+        questionsContainer.innerHTML = `
+            <h3>${currentQuestion.question}</h3>
+            <div class="quiz-options">
+                ${currentQuestion.options.map((option, index) => `
+                    <div class="quiz-option" data-index="${index}">
+                        ${option.text}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        // Add click handlers to new options
+        document.querySelectorAll('.quiz-option').forEach(option => {
+            option.addEventListener('click', () => selectOption(option));
+        });
+
+        updateNavigationButtons();
+    }
+
+    function selectOption(selectedOption) {
+        // Remove selection from other options
+        document.querySelectorAll('.quiz-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        // Add selection to clicked option
+        selectedOption.classList.add('selected');
+    }
+
+    function updateNavigationButtons() {
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        prevBtn.style.display = currentQuestionIndex > 0 ? 'inline-block' : 'none';
+        nextBtn.textContent = currentQuestionIndex === quizQuestions.length - 1 ? 'Get Recommendations' : 'Next';
+    }
+
+    function setupEventListeners() {
+        document.getElementById('next-btn').addEventListener('click', handleNext);
+        document.getElementById('prev-btn').addEventListener('click', handlePrev);
+        document.getElementById('show-all-hobbies').addEventListener('click', displayAllHobbies);
+    }
+
+    function handleNext() {
+        const selectedOption = document.querySelector('.quiz-option.selected');
+        if (!selectedOption) {
+            alert('Please select an option to continue');
+            return;
+        }
+
+        userResponses[currentQuestionIndex] = parseInt(selectedOption.dataset.index);
+
+        if (currentQuestionIndex < quizQuestions.length - 1) {
+            currentQuestionIndex++;
+            renderCurrentQuestion();
+        } else {
+            showRecommendations();
+        }
+    }
+
+    function handlePrev() {
+        if (currentQuestionIndex > 0) {
+            currentQuestionIndex--;
+            renderCurrentQuestion();
+            // Restore previous selection if it exists
+            if (userResponses[currentQuestionIndex] !== undefined) {
+                const options = document.querySelectorAll('.quiz-option');
+                options[userResponses[currentQuestionIndex]]?.classList.add('selected');
+            }
+        }
+    }
+
+    function showRecommendations() {
+        const recommendedHobbies = calculateRecommendations();
+        displayResults(recommendedHobbies);
+    }
+
+    function calculateRecommendations() {
+        let scoredHobbies = hobbies.map(hobby => ({
+            ...hobby,
+            score: 0
+        }));
+
+        userResponses.forEach((responseIndex, questionIndex) => {
+            const response = quizQuestions[questionIndex].options[responseIndex];
+            
+            scoredHobbies = scoredHobbies.map(hobby => {
+                let score = hobby.score;
+                
+                if (response.categories) {
+                    if (response.categories.includes(hobby.category)) {
+                        score += 2;
+                    }
+                }
+                
+                if (response.weightReduction) {
+                    score *= response.weightReduction;
+                }
+                
+                if (response.costSensitive) {
+                    // Adjust score based on hobby's implied cost
+                    score *= 1.2; // Simple multiplier for demo
+                }
+                
+                return { ...hobby, score };
+            });
+        });
+
+        return scoredHobbies
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 3);
+    }
+
+    function displayResults(recommendedHobbies) {
+        document.getElementById('quiz-container').style.display = 'none';
+        const hobbyList = document.getElementById('hobby-list');
+        
+        hobbyList.innerHTML = recommendedHobbies.map(hobby => `
+            <div class="hobby-card" onclick="showHobbyDetails(${hobby.id})">
+                <h3>${hobby.name}</h3>
+                <p>${hobby.category}</p>
+                <small>Recommended Match!</small>
+            </div>
+        `).join('');
+        
+        hobbyList.style.display = 'grid';
+        document.getElementById('show-all-hobbies').style.display = 'block';
+    }
+
+    function displayAllHobbies() {
+        const hobbyList = document.getElementById('hobby-list');
+        hobbyList.innerHTML = hobbies.map(hobby => `
+            <div class="hobby-card" onclick="showHobbyDetails(${hobby.id})">
+                <h3>${hobby.name}</h3>
+                <p>${hobby.category}</p>
+            </div>
+        `).join('');
+    }
+
+    function showHobbyDetails(id) {
+        const hobby = hobbies.find(h => h.id === id);
+        if (!hobby) return;
+
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeModal()">&times;</span>
+                <h2>${hobby.name}</h2>
+                <p>${hobby.description}</p>
+                <h3>Getting Started Tips:</h3>
+                <ul>
+                    ${hobby.tips.map(tip => `<li>${tip}</li>`).join('')}
+                </ul>
+                <a href="${hobby.getStartedLink}" target="_blank" class="get-started-btn">Get Started Resources</a>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+    }
+
+    function closeModal() {
+        const modal = document.querySelector('.modal');
+        if (modal) modal.remove();
+    }
+    </script>
+</body>
+</html>
